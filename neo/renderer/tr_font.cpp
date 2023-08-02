@@ -343,8 +343,11 @@ bool idRenderSystemLocal::RegisterFont( const char *fontName, fontInfoEx_t &font
 
 		idStr::Copynz( outFont->name, name, sizeof( outFont->name ) );
 
+		// Solution stolen from dhewm3, which is blergh, but hey ho
+		static constexpr unsigned int expectedSize = 20548;
 		len = fileSystem->ReadFile( name, NULL, &ftime );
-		if ( len != sizeof( fontInfo_t ) ) {
+		if ( len != expectedSize )
+		{
 			common->Warning( "RegisterFont: couldn't find font: '%s'", name );
 			return false;
 		}

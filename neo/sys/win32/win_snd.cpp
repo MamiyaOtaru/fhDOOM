@@ -474,7 +474,7 @@ int idAudioHardwareWIN32::Create( idAudioBuffer** ppSound,
 							   dword dwCreationFlags ) {
     int hr;
     LPDIRECTSOUNDBUFFER   apDSBuffer     = NULL;
-    dword                 dwDSBufferSize = NULL;
+    dword                 dwDSBufferSize = 0;
     idWaveFile*          pWaveFile      = NULL;
 
     if( m_pDS == NULL )
@@ -532,7 +532,7 @@ idAudioHardwareWIN32::Create
 int idAudioHardwareWIN32::Create( idWaveFile* pWaveFile, idAudioBuffer** ppiab ) {
     int hr;
     LPDIRECTSOUNDBUFFER   apDSBuffer     = NULL;
-    dword                dwDSBufferSize = NULL;
+    dword                dwDSBufferSize = 0;
 
     if( m_pDS == NULL )
         return -1;
@@ -589,7 +589,7 @@ int idAudioHardwareWIN32::CreateFromMemory( idAudioBufferWIN32** ppSound,
 										dword dwCreationFlags ) {
     int hr;
     LPDIRECTSOUNDBUFFER		apDSBuffer     = NULL;
-    dword					dwDSBufferSize = NULL;
+    dword					dwDSBufferSize = 0;
     idWaveFile*			pWaveFile      = NULL;
 
     if( m_pDS == NULL )

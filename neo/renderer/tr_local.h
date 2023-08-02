@@ -134,7 +134,7 @@ typedef struct {
 } shadowFrustum_t;
 
 
-typedef struct {
+typedef struct shadowMapFrustum_s {
 	int		numPlanes;		// this is always 6 for now
 	idPlane	planes[6];
 	// positive sides facing inward

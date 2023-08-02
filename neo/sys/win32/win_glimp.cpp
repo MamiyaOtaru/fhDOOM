@@ -47,6 +47,10 @@ If you have questions concerning this license or the applicable additional terms
 #include "rc/doom_resource.h"
 #include "../../renderer/tr_local.h"
 
+#if defined( __GNUC__ )
+#include <tchar.h>
+#endif
+
 /*
 =============================================================================
 
@@ -776,7 +780,7 @@ void GLimp_Shutdown( void ) {
 	if ( win32.renderThreadHandle ) {
 		common->Printf( "...closing smp thread\n" );
 		CloseHandle( win32.renderThreadHandle );
-		win32.renderThreadHandle = NULL;
+		win32.renderThreadHandle = nullptr;
 	}
 }
 

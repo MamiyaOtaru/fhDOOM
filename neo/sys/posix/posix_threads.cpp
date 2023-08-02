@@ -168,7 +168,7 @@ void Sys_CreateThread( xthread_t function, void *parms, xthreadPriority priority
 	if ( pthread_attr_setdetachstate( &attr, PTHREAD_CREATE_JOINABLE ) != 0 ) {
 		common->Error( "ERROR: pthread_attr_setdetachstate %s failed\n", name );
 	}
-	if ( pthread_create( ( pthread_t* )&info.threadHandle, &attr, ( pthread_function_t )function, parms ) != 0 ) {
+	if ( pthread_create( &info.threadHandle, &attr, ( pthread_function_t )function, parms ) != 0 ) {
 		common->Error( "ERROR: pthread_create %s failed\n", name );
 	}
 	pthread_attr_destroy( &attr );
@@ -189,10 +189,10 @@ Sys_DestroyThread
 void Sys_DestroyThread( xthreadInfo& info ) {
 	// the target thread must have a cancelation point, otherwise pthread_cancel is useless
 	assert( info.threadHandle );
-	if ( pthread_cancel( ( pthread_t )info.threadHandle ) != 0 ) {
+	if ( pthread_cancel( info.threadHandle ) != 0 ) {
 		common->Error( "ERROR: pthread_cancel %s failed\n", info.name );
 	}
-	if ( pthread_join( ( pthread_t )info.threadHandle, NULL ) != 0 ) {
+	if ( pthread_join( info.threadHandle, NULL ) != 0 ) {
 		common->Error( "ERROR: pthread_join %s failed\n", info.name );
 	}
 	info.threadHandle = 0;
@@ -223,7 +223,7 @@ const char* Sys_GetThreadName( int *index ) {
 	Sys_EnterCriticalSection( );
 	pthread_t thread = pthread_self();
 	for( int i = 0 ; i < g_thread_count ; i++ ) {
-		if ( thread == (pthread_t)g_threads[ i ]->threadHandle ) {
+		if ( thread == g_threads[ i ]->threadHandle ) {
 			if ( index ) {
 				*index = i;
 			}

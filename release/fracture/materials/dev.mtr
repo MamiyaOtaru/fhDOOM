@@ -1,0 +1,19 @@
+textures/dev/dev_tile_generic_00
+{
+    diffusemap textures/dev/dev_tile_generic_00.tga
+}
+
+textures/dev/dev_tile_generic_01
+{
+    diffusemap textures/dev/dev_tile_generic_01.tga
+}
+
+textures/dev/dev_tile_red_00
+{
+    diffusemap textures/dev/dev_tile_red_00.tga
+}
+
+textures/dev/dev_tile_blue_00
+{
+    diffusemap textures/dev/dev_tile_blue_00.tga
+}

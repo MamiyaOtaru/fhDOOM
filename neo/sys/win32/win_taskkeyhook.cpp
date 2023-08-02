@@ -34,7 +34,7 @@ If you have questions concerning this license or the applicable additional terms
 //
 
 //#define _WIN32_WINNT 0x0500 // for KBDLLHOOKSTRUCT
-#include <afxwin.h>         // MFC core and standard components
+//#include <afxwin.h>         // MFC core and standard components
 #include "win_local.h"
 
 #define DLLEXPORT __declspec(dllexport)
@@ -136,7 +136,7 @@ void DisableTaskKeys( BOOL bDisable, BOOL bBeep, BOOL bTaskMgr ) {
 		if ( bDisable ) {
 			// disable TM: set policy = 1
 			DWORD val = 1;
-			RegSetValueExA( hk, VAL_DisableTaskMgr, NULL, REG_DWORD, (BYTE*)&val, sizeof(val) );
+			RegSetValueExA( hk, VAL_DisableTaskMgr, 0, REG_DWORD, (BYTE*)&val, sizeof(val) );
 		} else {
 			// enable TM: remove policy
 			RegDeleteValueA( hk,VAL_DisableTaskMgr );

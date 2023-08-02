@@ -83,6 +83,9 @@ typedef enum {
 	DL_FAILED
 } dlStatus_t;
 
+#ifdef FILE_OPEN
+#undef FILE_OPEN
+#endif
 typedef enum {
 	FILE_EXEC,
 	FILE_OPEN

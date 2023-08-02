@@ -476,26 +476,29 @@ static void RB_GLSL_Shadow(const viewLight_t& vLight, const drawSurf_t& surf) {
     return;
   }
 */
-  // patent-free work around
-  if (!external) {
-    // "preload" the stencil buffer with the number of volumes
-    // that get clipped by the near or far clip plane
-    glStencilOp(GL_KEEP, GL_DECR_WRAP, GL_DECR_WRAP);
-    GL_Cull(CT_FRONT_SIDED);
-    RB_DrawShadowElementsWithCounters(tri, numIndexes);
-    glStencilOp(GL_KEEP, GL_INCR_WRAP, GL_INCR_WRAP);
-    GL_Cull(CT_BACK_SIDED);
-    RB_DrawShadowElementsWithCounters(tri, numIndexes);
+
+  // depth-fail/Z-Fail stencil shadows
+  if ( !external )
+  {
+	  glStencilOp( GL_KEEP, GL_DECR_WRAP, GL_KEEP );
+	  GL_Cull( CT_FRONT_SIDED );
+	  RB_DrawShadowElementsWithCounters( tri, numIndexes );
+
+	  glStencilOp( GL_KEEP, GL_INCR_WRAP, GL_KEEP );
+	  GL_Cull( CT_BACK_SIDED );
+	  RB_DrawShadowElementsWithCounters( tri, numIndexes );
   }
-
   // traditional depth-pass stencil shadows
-  glStencilOp(GL_KEEP, GL_KEEP, GL_INCR_WRAP);
-  GL_Cull(CT_FRONT_SIDED);
-  RB_DrawShadowElementsWithCounters(tri, numIndexes);
+  else
+  {
+	  glStencilOp( GL_KEEP, GL_KEEP, GL_INCR_WRAP );
+	  GL_Cull( CT_FRONT_SIDED );
+	  RB_DrawShadowElementsWithCounters( tri, numIndexes );
 
-  glStencilOp(GL_KEEP, GL_KEEP, GL_DECR_WRAP);
-  GL_Cull(CT_BACK_SIDED);
-  RB_DrawShadowElementsWithCounters(tri, numIndexes);
+	  glStencilOp( GL_KEEP, GL_KEEP, GL_DECR_WRAP );
+	  GL_Cull( CT_BACK_SIDED );
+	  RB_DrawShadowElementsWithCounters( tri, numIndexes );
+  }
 }
 
 

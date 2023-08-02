@@ -241,7 +241,7 @@ idList<idTypeInfo *>	idClass::typenums;
 
 bool	idClass::initialized	= false;
 int		idClass::typeNumBits	= 0;
-int		idClass::memused		= 0;
+size_t	idClass::memused		= 0;
 int		idClass::numobjects		= 0;
 
 /*
@@ -412,6 +412,11 @@ void idClass::Init( void ) {
 		types[ num ] = c;
 		typenums[ c->typeNum ] = c;
 	}
+
+	types.Sort( []( idTypeInfo *const *a, idTypeInfo *const *b )
+	            {
+		            return idStr::Cmp( ( *a )->classname, ( *b )->classname );
+	            } );
 
 	initialized = true;
 
@@ -828,7 +833,7 @@ idClass::ProcessEventArgs
 bool idClass::ProcessEventArgs( const idEventDef *ev, int numargs, ... ) {
 	idTypeInfo	*c;
 	int			num;
-	int			data[ D_EVENT_MAXARGS ];
+	intptr_t	data[ D_EVENT_MAXARGS ];
 	va_list		args;
 
 	assert( ev );
@@ -936,7 +941,8 @@ bool idClass::ProcessEvent( const idEventDef *ev, idEventArg arg1, idEventArg ar
 idClass::ProcessEventArgPtr
 ================
 */
-bool idClass::ProcessEventArgPtr( const idEventDef *ev, int *data ) {
+bool idClass::ProcessEventArgPtr( const idEventDef *ev, intptr_t *data )
+{
 	idTypeInfo	*c;
 	int			num;
 	eventCallback_t	callback;

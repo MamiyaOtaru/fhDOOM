@@ -52,6 +52,8 @@ SET_PROPERTY(TARGET curl                PROPERTY FOLDER 3rdParty)
 IF(UNIX)
   add_definitions(-DHAVE_GETTIMEOFDAY)
   add_definitions(-DHAVE_HAVE_NETINET_IN_H)
+elseif(MSVC)
+	add_definitions(-D_WINSOCK_DEPRECATED_NO_WARNINGS)
 ENDIF()  
 
 set_cpu_arch(curl)

@@ -115,7 +115,7 @@ const void *idVertexCache::Position( const vertCache_t *buffer ) {
 
 	if ( r_showVertexCache.GetInteger() == 2 ) {
 		if ( buffer->tag == TAG_TEMP ) {
-			common->Printf( "GL_ARRAY_BUFFER = %i + %i (%i bytes)\n", buffer->vbo, buffer->offset, buffer->size );
+			common->Printf( "GL_ARRAY_BUFFER = %i + %li (%i bytes)\n", buffer->vbo, buffer->offset, buffer->size );
 		} else {
 			common->Printf( "GL_ARRAY_BUFFER = %i (%i bytes)\n", buffer->vbo, buffer->size );
 		}
@@ -150,7 +150,7 @@ int idVertexCache::Bind(const vertCache_t *buffer) {
 
   if (r_showVertexCache.GetInteger() == 2) {
     if (buffer->tag == TAG_TEMP) {
-      common->Printf("GL_ARRAY_BUFFER = %i + %i (%i bytes)\n", buffer->vbo, buffer->offset, buffer->size);
+      common->Printf("GL_ARRAY_BUFFER = %i + %li (%i bytes)\n", buffer->vbo, buffer->offset, buffer->size);
     }
     else {
       common->Printf("GL_ARRAY_BUFFER = %i (%i bytes)\n", buffer->vbo, buffer->size);

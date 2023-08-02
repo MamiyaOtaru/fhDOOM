@@ -57,7 +57,13 @@ idCVar Win32Vars_t::win_notaskkeys( "win_notaskkeys", "0", CVAR_SYSTEM | CVAR_IN
 idCVar Win32Vars_t::win_username( "win_username", "", CVAR_SYSTEM | CVAR_INIT, "windows user name" );
 idCVar Win32Vars_t::win_xpos( "win_xpos", "3", CVAR_SYSTEM | CVAR_ARCHIVE | CVAR_INTEGER, "horizontal position of window" );
 idCVar Win32Vars_t::win_ypos( "win_ypos", "22", CVAR_SYSTEM | CVAR_ARCHIVE | CVAR_INTEGER, "vertical position of window" );
-idCVar Win32Vars_t::win_outputDebugString( "win_outputDebugString", "0", CVAR_SYSTEM | CVAR_BOOL, "" );
+idCVar Win32Vars_t::win_outputDebugString( "win_outputDebugString", 
+#if !defined( NDEBUG )
+	"1", 
+#else
+	"0",
+#endif
+	CVAR_SYSTEM | CVAR_BOOL, "" );
 idCVar Win32Vars_t::win_outputEditString( "win_outputEditString", "1", CVAR_SYSTEM | CVAR_BOOL, "" );
 idCVar Win32Vars_t::win_viewlog( "win_viewlog", "0", CVAR_SYSTEM | CVAR_INTEGER, "" );
 idCVar Win32Vars_t::win_timerUpdate( "win_timerUpdate", "0", CVAR_SYSTEM | CVAR_BOOL, "allows the game to be updated while dragging the window" );
@@ -92,17 +98,16 @@ Sys_Createthread
 ==================
 */
 void Sys_CreateThread(  xthread_t function, void *parms, xthreadPriority priority, xthreadInfo &info, const char *name, xthreadInfo *threads[MAX_THREADS], int *thread_count ) {
-	HANDLE temp = CreateThread(	NULL,	// LPSECURITY_ATTRIBUTES lpsa,
+	info.threadHandle = CreateThread(	NULL,	// LPSECURITY_ATTRIBUTES lpsa,
 									0,		// DWORD cbStack,
 									(LPTHREAD_START_ROUTINE)function,	// LPTHREAD_START_ROUTINE lpStartAddr,
 									parms,	// LPVOID lpvThreadParm,
 									0,		//   DWORD fdwCreate,
 									&info.threadId);
-	info.threadHandle = (int) temp;
 	if (priority == THREAD_HIGHEST) {
-		SetThreadPriority( (HANDLE)info.threadHandle, THREAD_PRIORITY_HIGHEST );		//  we better sleep enough to do this
+		SetThreadPriority( info.threadHandle, THREAD_PRIORITY_HIGHEST );		//  we better sleep enough to do this
 	} else if (priority == THREAD_ABOVE_NORMAL ) {
-		SetThreadPriority( (HANDLE)info.threadHandle, THREAD_PRIORITY_ABOVE_NORMAL );
+		SetThreadPriority( info.threadHandle, THREAD_PRIORITY_ABOVE_NORMAL );
 	}
 	info.name = name;
 	if ( *thread_count < MAX_THREADS ) {
@@ -118,9 +123,9 @@ Sys_DestroyThread
 ==================
 */
 void Sys_DestroyThread( xthreadInfo& info ) {
-	WaitForSingleObject( (HANDLE)info.threadHandle, INFINITE);
-	CloseHandle( (HANDLE)info.threadHandle );
-	info.threadHandle = 0;
+	WaitForSingleObject( info.threadHandle, INFINITE);
+	CloseHandle( info.threadHandle );
+	info.threadHandle = nullptr;
 }
 
 /*
@@ -549,7 +554,7 @@ Sys_ListFiles
 int Sys_ListFiles( const char *directory, const char *extension, idStrList &list ) {
 	idStr		search;
 	struct _finddata_t findinfo;
-	int			findhandle;
+	intptr_t findhandle;
 	int			flag;
 
 	if ( !extension) {
@@ -684,7 +689,7 @@ Sys_DLL_GetProcAddress
 =====================
 */
 void *Sys_DLL_GetProcAddress( intptr_t dllHandle, const char *procName ) {
-	return GetProcAddress( (HINSTANCE)dllHandle, procName );
+	return ( void * ) GetProcAddress( (HINSTANCE)dllHandle, procName );
 }
 
 /*
@@ -968,6 +973,8 @@ The cvar system must already be setup
 #define OSR2_BUILD_NUMBER 1111
 #define WIN98_BUILD_NUMBER 1998
 
+#include <VersionHelpers.h>
+
 void Sys_Init( void ) {
 
 	CoInitialize( NULL );
@@ -995,54 +1002,24 @@ void Sys_Init( void ) {
 	//
 	// Windows version
 	//
-	win32.osversion.dwOSVersionInfoSize = sizeof( win32.osversion );
+	
+	/* For reasons best known to Microsoft, GetVersionEx is deprecated and 
+	 * no longer accurate on modern Windows. I've replaced the below with
+	 * the 'recommended' solution. ~hogsy */
 
-	if ( !GetVersionEx( (LPOSVERSIONINFO)&win32.osversion ) )
-		Sys_Error( "Couldn't get OS info" );
-
-	if ( win32.osversion.dwMajorVersion < 4 ) {
+	if ( !IsWindowsVersionOrGreater( 4, 0, 0 ) )
 		Sys_Error( GAME_NAME " requires Windows version 4 (NT) or greater" );
-	}
-	if ( win32.osversion.dwPlatformId == VER_PLATFORM_WIN32s ) {
-		Sys_Error( GAME_NAME " doesn't run on Win32s" );
-	}
 
-	if( win32.osversion.dwPlatformId == VER_PLATFORM_WIN32_NT ) {
-		if( win32.osversion.dwMajorVersion <= 4 ) {
-			win32.sys_arch.SetString( "WinNT (NT)" );
-		} else if( win32.osversion.dwMajorVersion == 5 && win32.osversion.dwMinorVersion == 0 ) {
-			win32.sys_arch.SetString( "Win2K (NT)" );
-		} else if( win32.osversion.dwMajorVersion == 5 && win32.osversion.dwMinorVersion == 1 ) {
-			win32.sys_arch.SetString( "WinXP (NT)" );
-		} else if ( win32.osversion.dwMajorVersion == 6 ) {
-			win32.sys_arch.SetString( "Vista" );
-		} else {
-			win32.sys_arch.SetString( "Unknown NT variant" );
-		}
-	} else if( win32.osversion.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS ) {
-		if( win32.osversion.dwMajorVersion == 4 && win32.osversion.dwMinorVersion == 0 ) {
-			// Win95
-			if( win32.osversion.szCSDVersion[1] == 'C' ) {
-				win32.sys_arch.SetString( "Win95 OSR2 (95)" );
-			} else {
-				win32.sys_arch.SetString( "Win95 (95)" );
-			}
-		} else if( win32.osversion.dwMajorVersion == 4 && win32.osversion.dwMinorVersion == 10 ) {
-			// Win98
-			if( win32.osversion.szCSDVersion[1] == 'A' ) {
-				win32.sys_arch.SetString( "Win98SE (95)" );
-			} else {
-				win32.sys_arch.SetString( "Win98 (95)" );
-			}
-		} else if( win32.osversion.dwMajorVersion == 4 && win32.osversion.dwMinorVersion == 90 ) {
-			// WinMe
-		  	win32.sys_arch.SetString( "WinMe (95)" );
-		} else {
-		  	win32.sys_arch.SetString( "Unknown 95 variant" );
-		}
-	} else {
-		win32.sys_arch.SetString( "unknown Windows variant" );
-	}
+	if ( IsWindows10OrGreater() )
+		win32.sys_arch.SetString( "Win10" );
+	else if ( IsWindows8Point1OrGreater() )
+		win32.sys_arch.SetString( "Win8.1" );
+	else if ( IsWindows7SP1OrGreater() )
+		win32.sys_arch.SetString( "Win7SP1" );
+	else if ( IsWindows7OrGreater() )
+		win32.sys_arch.SetString( "Win7" );
+	else
+		win32.sys_arch.SetString( "Unknown/unsupported Windows variant" );
 
 	//
 	// CPU type
@@ -1082,6 +1059,8 @@ void Sys_Init( void ) {
 		if ( win32.cpuid & CPUID_SSE3 ) {
 			string += "SSE3 & ";
 		}
+		if ( win32.cpuid & CPUID_SSE41 ) string += "SSE41 & ";
+		if ( win32.cpuid & CPUID_SSE42 ) string += "SSE42 & ";
 		if ( win32.cpuid & CPUID_HTT ) {
 			string += "HTT & ";
 		}
@@ -1095,25 +1074,28 @@ void Sys_Init( void ) {
 
 		int id = CPUID_NONE;
 		while( src.ReadToken( &token ) ) {
-			if ( token.Icmp( "generic" ) == 0 ) {
+			if ( token.Icmp( "generic" ) == 0 )
 				id |= CPUID_GENERIC;
-			} else if ( token.Icmp( "intel" ) == 0 ) {
+			else if ( token.Icmp( "intel" ) == 0 )
 				id |= CPUID_INTEL;
-			} else if ( token.Icmp( "amd" ) == 0 ) {
+			else if ( token.Icmp( "amd" ) == 0 )
 				id |= CPUID_AMD;
-			} else if ( token.Icmp( "mmx" ) == 0 ) {
+			else if ( token.Icmp( "mmx" ) == 0 )
 				id |= CPUID_MMX;
-			} else if ( token.Icmp( "3dnow" ) == 0 ) {
+			else if ( token.Icmp( "3dnow" ) == 0 )
 				id |= CPUID_3DNOW;
-			} else if ( token.Icmp( "sse" ) == 0 ) {
+			else if ( token.Icmp( "sse" ) == 0 )
 				id |= CPUID_SSE;
-			} else if ( token.Icmp( "sse2" ) == 0 ) {
+			else if ( token.Icmp( "sse2" ) == 0 )
 				id |= CPUID_SSE2;
-			} else if ( token.Icmp( "sse3" ) == 0 ) {
+			else if ( token.Icmp( "sse3" ) == 0 )
 				id |= CPUID_SSE3;
-			} else if ( token.Icmp( "htt" ) == 0 ) {
+			else if ( token.Icmp( "sse41" ) == 0 )
+				id |= CPUID_SSE41;
+			else if ( token.Icmp( "sse42" ) == 0 )
+				id |= CPUID_SSE42;
+			else if ( token.Icmp( "htt" ) == 0 )
 				id |= CPUID_HTT;
-			}
 		}
 		if ( id == CPUID_NONE ) {
 			common->Printf( "WARNING: unknown sys_cpustring '%s'\n", win32.sys_cpustring.GetString() );
@@ -1205,129 +1187,6 @@ const char *GetExceptionCodeInfo( UINT code ) {
 	}
 }
 
-/*
-====================
-EmailCrashReport
-
-  emailer originally from Raven/Quake 4
-====================
-*/
-void EmailCrashReport( LPSTR messageText ) {
-	LPMAPISENDMAIL	MAPISendMail;
-	MapiMessage		message;
-	static int lastEmailTime = 0;
-
-	if ( Sys_Milliseconds() < lastEmailTime + 10000 ) {
-		return;
-	}
-
-	lastEmailTime = Sys_Milliseconds();
-
-	HINSTANCE mapi = LoadLibraryA( "MAPI32.DLL" );
-	if( mapi ) {
-		MAPISendMail = ( LPMAPISENDMAIL )GetProcAddress( mapi, "MAPISendMail" );
-		if( MAPISendMail ) {
-			MapiRecipDesc toProgrammers =
-			{
-				0,										// ulReserved
-					MAPI_TO,							// ulRecipClass
-					"DOOM 3 Crash",						// lpszName
-					"SMTP:programmers@idsoftware.com",	// lpszAddress
-					0,									// ulEIDSize
-					0									// lpEntry
-			};
-
-			memset( &message, 0, sizeof( message ) );
-			message.lpszSubject = "DOOM 3 Fatal Error";
-			message.lpszNoteText = messageText;
-			message.nRecipCount = 1;
-			message.lpRecips = &toProgrammers;
-
-			MAPISendMail(
-				0,									// LHANDLE lhSession
-				0,									// ULONG ulUIParam
-				&message,							// lpMapiMessage lpMessage
-				MAPI_DIALOG,						// FLAGS flFlags
-				0									// ULONG ulReserved
-				);
-		}
-		FreeLibrary( mapi );
-	}
-}
-
-int Sys_FPU_PrintStateFlags( char *ptr, int ctrl, int stat, int tags, int inof, int inse, int opof, int opse );
-
-/*
-====================
-_except_handler
-====================
-*/
-EXCEPTION_DISPOSITION __cdecl _except_handler( struct _EXCEPTION_RECORD *ExceptionRecord, void * EstablisherFrame,
-												struct _CONTEXT *ContextRecord, void * DispatcherContext ) {
-
-	static char msg[ 8192 ];
-	char FPUFlags[2048];
-
-	Sys_FPU_PrintStateFlags( FPUFlags, ContextRecord->FloatSave.ControlWord,
-										ContextRecord->FloatSave.StatusWord,
-										ContextRecord->FloatSave.TagWord,
-										ContextRecord->FloatSave.ErrorOffset,
-										ContextRecord->FloatSave.ErrorSelector,
-										ContextRecord->FloatSave.DataOffset,
-										ContextRecord->FloatSave.DataSelector );
-
-
-	sprintf( msg,
-		"Please describe what you were doing when DOOM 3 crashed!\n"
-		"If this text did not pop into your email client please copy and email it to programmers@idsoftware.com\n"
-			"\n"
-			"-= FATAL EXCEPTION =-\n"
-			"\n"
-			"%s\n"
-			"\n"
-			"0x%x at address 0x%08x\n"
-			"\n"
-			"%s\n"
-			"\n"
-			"EAX = 0x%08x EBX = 0x%08x\n"
-			"ECX = 0x%08x EDX = 0x%08x\n"
-			"ESI = 0x%08x EDI = 0x%08x\n"
-			"EIP = 0x%08x ESP = 0x%08x\n"
-			"EBP = 0x%08x EFL = 0x%08x\n"
-			"\n"
-			"CS = 0x%04x\n"
-			"SS = 0x%04x\n"
-			"DS = 0x%04x\n"
-			"ES = 0x%04x\n"
-			"FS = 0x%04x\n"
-			"GS = 0x%04x\n"
-			"\n"
-			"%s\n",
-			com_version.GetString(),
-			ExceptionRecord->ExceptionCode,
-			ExceptionRecord->ExceptionAddress,
-			GetExceptionCodeInfo( ExceptionRecord->ExceptionCode ),
-			ContextRecord->Eax, ContextRecord->Ebx,
-			ContextRecord->Ecx, ContextRecord->Edx,
-			ContextRecord->Esi, ContextRecord->Edi,
-			ContextRecord->Eip, ContextRecord->Esp,
-			ContextRecord->Ebp, ContextRecord->EFlags,
-			ContextRecord->SegCs,
-			ContextRecord->SegSs,
-			ContextRecord->SegDs,
-			ContextRecord->SegEs,
-			ContextRecord->SegFs,
-			ContextRecord->SegGs,
-			FPUFlags
-		);
-
-	EmailCrashReport( msg );
-	common->FatalError( msg );
-
-    // Tell the OS to restart the faulting instruction
-    return ExceptionContinueExecution;
-}
-
 #define TEST_FPU_EXCEPTIONS	/*	FPU_EXCEPTION_INVALID_OPERATION |		*/	\
 							/*	FPU_EXCEPTION_DENORMALIZED_OPERAND |	*/	\
 							/*	FPU_EXCEPTION_DIVIDE_BY_ZERO |			*/	\
@@ -1348,16 +1207,6 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	Sys_SetPhysicalWorkMemory( 192 << 20, 1024 << 20 );
 
 	Sys_GetCurrentMemoryStatus( exeLaunchMemoryStats );
-
-#if 0
-    DWORD handler = (DWORD)_except_handler;
-    __asm
-    {                           // Build EXCEPTION_REGISTRATION record:
-        push    handler         // Address of handler function
-        push    FS:[0]          // Address of previous handler
-        mov     FS:[0],ESP      // Install new EXECEPTION_REGISTRATION
-    }
-#endif
 
 	win32.hInstance = hInstance;
 	idStr::Copynz( sys_cmdline, lpCmdLine, sizeof( sys_cmdline ) );

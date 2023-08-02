@@ -69,12 +69,15 @@ rvGEWindowWrapper::rvGEWindowWrapper( idWindow *window,EWindowType type ) {
 
 	// Attach the wrapper to the window by adding a defined variable
 	// with the wrappers pointer stuffed into an integer
-	idWinInt *var = new idWinInt();
-	int x = (int)this;
-	*var = x;
-	var->SetEval(false);
-	var->SetName("guied_wrapper");
-	mWindow->AddDefinedVar(var);
+	// DG: use idWinStr, because idWinInt can't cold 64bit pointers
+	idWinStr *var = new idWinStr();
+
+	// convert this to hex-string (*without* "0x" prefix)
+	const ULONG_PTR thisULP   = ( ULONG_PTR ) this;
+	char            buf[ 32 ] = { 0 };
+	_ui64toa( thisULP, buf, 16 );
+
+	var->Set( buf );
 
 	SetStateKey("name", mWindow->GetName(), false);
 }
@@ -87,9 +90,13 @@ Static method that returns the window wrapper for the given window class
 ================
 */
 rvGEWindowWrapper * rvGEWindowWrapper::GetWrapper( idWindow *window ) {
-	idWinInt *var;
-	var = dynamic_cast< idWinInt*>(window->GetWinVarByName("guied_wrapper"));
-	return var ? ((rvGEWindowWrapper *) (int) (*var)) : NULL;
+	// DG: use idWinStr, because idWinInt can't cold 64bit pointers
+	idWinStr *var = ( idWinStr * ) window->GetWinVarByName( "guied_wrapper" );
+	if ( var == NULL )
+		return NULL;
+
+	ULONG_PTR thisULP = ( ULONG_PTR ) _strtoui64( var->c_str(), NULL, 16 );
+	return ( rvGEWindowWrapper * ) thisULP;
 }
 
 /*

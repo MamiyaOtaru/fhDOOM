@@ -2290,7 +2290,7 @@ int idParser::DollarDirective_evalfloat( void ) {
 	token.type = TT_NUMBER;
 	token.subtype = TT_FLOAT | TT_LONG | TT_DECIMAL | TT_VALUESVALID;
 	token.intvalue = (unsigned long) fabs( value );
-	token.floatvalue = fabs( value );
+	token.floatvalue = fabsf( value );
 	idParser::UnreadSourceToken( &token );
 	if ( value < 0 ) {
 		idParser::UnreadSignToken();

@@ -132,9 +132,7 @@ StripFilename
 */
 void StripFilename (char *path)
 {
-	int             length;
-
-	length = strlen(path)-1;
+	size_t length = strlen(path)-1;
 	while (length > 0 && path[length] != PATHSEPERATOR) {
 		length--;
 	}
@@ -148,9 +146,7 @@ StripExtension
 */
 void StripExtension (char *path)
 {
-	int             length;
-
-	length = strlen(path)-1;
+	size_t length = strlen(path)-1;
 	while (length > 0 && path[length] != '.')
 	{
 		length--;

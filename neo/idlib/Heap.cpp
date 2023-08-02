@@ -43,9 +43,9 @@ If you have questions concerning this license or the applicable additional terms
 //
 //===============================================================
 
-#define SMALL_HEADER_SIZE		( (int) ( sizeof( byte ) + sizeof( byte ) ) )
-#define MEDIUM_HEADER_SIZE		( (int) ( sizeof( mediumHeapEntry_s ) + sizeof( byte ) ) )
-#define LARGE_HEADER_SIZE		( (int) ( sizeof( dword * ) + sizeof( byte ) ) )
+#define SMALL_HEADER_SIZE		( (intptr_t) ( sizeof( byte ) + sizeof( byte ) ) )
+#define MEDIUM_HEADER_SIZE		( (intptr_t) ( sizeof( mediumHeapEntry_s ) + sizeof( byte ) ) )
+#define LARGE_HEADER_SIZE		( (intptr_t) ( sizeof( dword * ) + sizeof( byte ) ) )
 
 #define ALIGN_SIZE( bytes )		( ( (bytes) + ALIGN - 1 ) & ~(ALIGN - 1) )
 #define SMALL_ALIGN( bytes )	( ALIGN_SIZE( (bytes) + SMALL_HEADER_SIZE ) - SMALL_HEADER_SIZE )
@@ -1116,7 +1116,7 @@ void *Mem_Alloc16( const int size ) {
 	}
 	void *mem = mem_heap->Allocate16( size );
 	// make sure the memory is 16 byte aligned
-	assert( ( ((int)mem) & 15) == 0 );
+	assert( ( ((INT_PTR)mem) & 15) == 0 );
 	return mem;
 }
 
@@ -1137,7 +1137,7 @@ void Mem_Free16( void *ptr ) {
 		return;
 	}
 	// make sure the memory is 16 byte aligned
-	assert( ( ((int)ptr) & 15) == 0 );
+	assert((((INT_PTR)ptr) & 15) == 0);
  	mem_heap->Free16( ptr );
 }
 

@@ -37,25 +37,35 @@ If you have questions concerning this license or the applicable additional terms
 ===============================================================================
 */
 
-
 // Win32
 #if defined(WIN32) || defined(_WIN32)
 
-static_assert(sizeof(void*) == 4, "need 32bit pointers");
-#define	BUILD_STRING					"win-x86"
-#define BUILD_OS_ID						0
-#define	CPUSTRING						"x86"
+#if defined(_M_X64)
+	static_assert(sizeof(void*) == 8, "need 64bit pointers");
+	#define	BUILD_STRING	"win-x64"
+	#define	CPUSTRING		"x64"
+#else
+	static_assert(sizeof(void *) == 4, "need 32bit pointers");
+	#define BUILD_STRING	"win-x86"
+	#define CPUSTRING		"x86"
+#endif
 
-#define ALIGN16( x )					__declspec(align(16)) x
+#define BUILD_OS_ID  0
 #define PACKED
 
-#define _alloca16( x )					((void *)((((int)_alloca( (x)+15 )) + 15) & ~15))
+#define _alloca16(x) ((void *)((((std::ptrdiff_t)_alloca((x) + 15)) + 15) & ~15))
 
 #define PATHSEPERATOR_STR				"\\"
 #define PATHSEPERATOR_CHAR				'\\'
 
-#define ID_INLINE						__forceinline
-#define ID_STATIC_TEMPLATE				static
+#if defined( __GNUC__ )
+#define ID_INLINE inline
+#define ID_STATIC_TEMPLATE
+#else
+#define ID_INLINE          __forceinline
+#define ID_STATIC_TEMPLATE static
+#endif
+#define ID_INLINE_EXTERN extern ID_INLINE
 
 #define assertmem( x, y )				assert( _CrtIsValidPointer( x, y, true ) )
 
@@ -79,7 +89,6 @@ static_assert(sizeof(void*) == 4, "need 32bit pointers");
 #define _alloca							alloca
 #define _alloca16( x )					((void *)((((std::ptrdiff_t)alloca( (x)+15 )) + 15) & ~15))
 
-#define ALIGN16( x )					x
 #define PACKED							__attribute__((packed))
 
 #define PATHSEPERATOR_STR				"/"
@@ -89,11 +98,19 @@ static_assert(sizeof(void*) == 4, "need 32bit pointers");
 #define ASSERT							assert
 
 #define ID_INLINE						inline
+#define ID_INLINE_EXTERN 				extern ID_INLINE
 #define ID_STATIC_TEMPLATE
 
 #define assertmem( x, y )
 
 #endif
+
+#ifdef _MSC_VER
+#define ALIGN( x ) __declspec( align( x ) )
+#else /* __GNUC__ */
+#define ALIGN( x ) __attribute__( ( __aligned__( x ) ) )
+#endif
+#define ALIGN16( x ) ALIGN( 16 ) x
 
 #ifdef __GNUC__
 #define id_attribute(x) __attribute__(x)
@@ -113,6 +130,8 @@ typedef enum {
 	CPUID_SSE2							= 0x00080,	// Streaming SIMD Extensions 2
 	CPUID_SSE3							= 0x00100,	// Streaming SIMD Extentions 3 aka Prescott's New Instructions
 	CPUID_ALTIVEC						= 0x00200,	// AltiVec
+	CPUID_SSE41							= 0x00400,	// Streaming SIMD Extension 4.1
+	CPUID_SSE42							= 0x00800,	// Streaming SIMD Extension 4.2
 	CPUID_HTT							= 0x01000,	// Hyper-Threading Technology
 	CPUID_CMOV							= 0x02000,	// Conditional Move (CMOV) and fast floating point comparison (FCOMI) instructions
 	CPUID_FTZ							= 0x04000,	// Flush-To-Zero mode (denormal results are flushed to zero)
@@ -250,9 +269,6 @@ const char *	Sys_GetProcessorString( void );
 // returns true if the FPU stack is empty
 bool			Sys_FPU_StackIsEmpty( void );
 
-// empties the FPU stack
-void			Sys_FPU_ClearStack( void );
-
 // returns the FPU state as a string
 const char *	Sys_FPU_GetState( void );
 
@@ -261,9 +277,6 @@ void			Sys_FPU_EnableExceptions( int exceptions );
 
 // sets the FPU precision
 void			Sys_FPU_SetPrecision( int precision );
-
-// sets the FPU rounding mode
-void			Sys_FPU_SetRounding( int rounding );
 
 // sets Flush-To-Zero mode (only available when CPUID_FTZ is set)
 void			Sys_FPU_SetFTZ( bool enable );
@@ -295,7 +308,6 @@ void			Sys_SetPhysicalWorkMemory( int minBytes, int maxBytes );
 void			Sys_GetCallStack( address_t *callStack, const int callStackSize );
 const char *	Sys_GetCallStackStr( const address_t *callStack, const int callStackSize );
 const char *	Sys_GetCallStackCurStr( int depth );
-const char *	Sys_GetCallStackCurAddressStr( int depth );
 void			Sys_ShutdownSymbols( void );
 
 // DLL loading, the path should be a fully qualified OS path to the DLL file to be loaded
@@ -464,9 +476,15 @@ typedef enum {
 	THREAD_HIGHEST
 } xthreadPriority;
 
+#if defined( _WIN32 )
+typedef HANDLE xthreadHandle;
+#else
+typedef pthread_t xthreadHandle;
+#endif
+
 typedef struct {
 	const char *	name;
-	int				threadHandle;
+	xthreadHandle	threadHandle;
 	unsigned long	threadId;
 } xthreadInfo;
 

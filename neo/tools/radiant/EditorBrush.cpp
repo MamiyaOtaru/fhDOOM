@@ -649,7 +649,7 @@ void DrawBrushEntityName(brush_t *b, const idVec3& color) {
 
 	if (g_qeglobals.d_savedinfo.show_names && scale >= 1.0f) {
 		name = b->owner->ValueForKey("name");
-		int nameLen = strlen(name);
+		size_t nameLen = strlen(name);
 		if ( nameLen == 0 ) {
 			name = b->owner->ValueForKey("classname");
 			nameLen = strlen(name);

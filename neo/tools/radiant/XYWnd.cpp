@@ -1771,7 +1771,7 @@ bool MergeMenu(CMenu * pMenuDestination, const CMenu * pMenuAdd, bool bTopLevel 
 			HMENU hNewMenu = NewPopupMenu.GetSafeHmenu();
 			if (pMenuDestination->InsertMenu(iInsertPosDefault,
 				MF_BYPOSITION | MF_POPUP | MF_ENABLED,
-				(UINT)hNewMenu, sMenuAddString ))
+				(UINT_PTR)hNewMenu, sMenuAddString ))
 			{
 				// don't forget to correct the item count
 				iMenuDestItemCount++;
@@ -1837,7 +1837,7 @@ void CXYWnd::HandleDrop() {
 					if (pChild) {
 						pMakeEntityPop->AppendMenu (
 							MF_POPUP,
-							reinterpret_cast < unsigned int > (pChild->GetSafeHmenu()),
+							reinterpret_cast < UINT_PTR > (pChild->GetSafeHmenu()),
 							strActive
 						);
 						g_ptrMenus.Add(pChild);
@@ -1856,7 +1856,7 @@ void CXYWnd::HandleDrop() {
 				if (pChild) {
 					pMakeEntityPop->AppendMenu (
 						MF_POPUP,
-						reinterpret_cast < unsigned int > (pChild->GetSafeHmenu()),
+						reinterpret_cast < UINT_PTR > (pChild->GetSafeHmenu()),
 						strActive
 					);
 					g_ptrMenus.Add(pChild);
@@ -1872,7 +1872,7 @@ void CXYWnd::HandleDrop() {
 		if ( pMakeEntityPop != &m_mnuDrop ) {
 			m_mnuDrop.AppendMenu (
 				MF_POPUP,
-				reinterpret_cast < unsigned int > (pMakeEntityPop->GetSafeHmenu()),
+				reinterpret_cast < UINT_PTR > (pMakeEntityPop->GetSafeHmenu()),
 				"Make Entity"
 			);
 		}
@@ -3880,7 +3880,7 @@ void CXYWnd::Paste()
 
 		int		nLen = g_Clipboard.GetLength();
 		char	*pBuffer = new char[nLen + 1];
-		memset(pBuffer, 0, sizeof(pBuffer));
+		memset(pBuffer, 0, nLen + 1);
 		g_Clipboard.Read(pBuffer, nLen);
 		pBuffer[nLen] = '\0';
 		Map_ImportBuffer(pBuffer, !(GetAsyncKeyState(VK_SHIFT) & 0x8000));
@@ -3961,7 +3961,7 @@ idVec3 &CXYWnd::RotateOrigin() {
  =======================================================================================================================
  =======================================================================================================================
  */
-void CXYWnd::OnTimer(UINT nIDEvent) {
+void CXYWnd::OnTimer(UINT_PTR nIDEvent) {
 	if (nIDEvent == 100) {
 		int nDim1 = (m_nViewType == ViewType::YZ) ? 1 : 0;
 		int nDim2 = (m_nViewType == ViewType::XY) ? 1 : 2;

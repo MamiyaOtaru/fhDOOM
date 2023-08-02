@@ -1078,19 +1078,7 @@ idStr::Cmp
 ================
 */
 int idStr::Cmp( const char *s1, const char *s2 ) {
-	int c1, c2, d;
-
-	do {
-		c1 = *s1++;
-		c2 = *s2++;
-
-		d = c1 - c2;
-		if ( d ) {
-			return ( INTSIGNBITNOTSET( d ) << 1 ) - 1;
-		}
-	} while( c1 );
-
-	return 0;		// strings are equal
+	return strcmp( s1, s2 );
 }
 
 /*
@@ -1099,25 +1087,8 @@ idStr::Cmpn
 ================
 */
 int idStr::Cmpn( const char *s1, const char *s2, int n ) {
-	int c1, c2, d;
-
 	assert( n >= 0 );
-
-	do {
-		c1 = *s1++;
-		c2 = *s2++;
-
-		if ( !n-- ) {
-			return 0;		// strings are equal until end point
-		}
-
-		d = c1 - c2;
-		if ( d ) {
-			return ( INTSIGNBITNOTSET( d ) << 1 ) - 1;
-		}
-	} while( c1 );
-
-	return 0;		// strings are equal
+	return strncmp( s1, s2, n );
 }
 
 /*

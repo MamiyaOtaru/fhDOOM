@@ -145,7 +145,6 @@ add_msvc_precompiled_header(precompiled.h SOURCES)
 
 SET(SOURCES ${SOURCES} gamesys/TypeInfo.cpp) #TypeInfo must be compiled without pch, so it can redefine some keywords
 
-
 source_group(game .*)  
 source_group(game\\AI ai/.*)  
 source_group(game\\Animation animation/.*)  
@@ -154,13 +153,15 @@ source_group(game\\Physics physics/.*)
 source_group(game\\Script script/.*)  
 
 IF(CMAKE_SIZEOF_VOID_P EQUAL 8 AND NOT ID_ENFORCE32BIT)
-  set(TARGET_NAME "fhGame-x64")
+	set(GAME_TARGET_NAME "fhGame-x64")
 ELSE()
-  set(TARGET_NAME "fhGame-x86")
+	set(GAME_TARGET_NAME "fhGame-x86")
 ENDIF()
 
 add_definitions(-D__DOOM__ -DGAME_DLL)
-add_library(${TARGET_NAME} SHARED ${SOURCES})
-target_link_libraries(${TARGET_NAME} idlib)
-set_property(TARGET ${TARGET_NAME} PROPERTY FOLDER dlls) 
-set_cpu_arch(${TARGET_NAME}) 
+add_library(${GAME_TARGET_NAME} SHARED ${SOURCES})
+target_link_libraries(${GAME_TARGET_NAME} idlib)
+set_property(TARGET ${GAME_TARGET_NAME} PROPERTY FOLDER dlls) 
+set_cpu_arch(${GAME_TARGET_NAME})
+
+set_property(GLOBAL PROPERTY GLOB_GAME_TARGET_NAME "${GAME_TARGET_NAME}")

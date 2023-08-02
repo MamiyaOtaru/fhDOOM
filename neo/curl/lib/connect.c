@@ -76,11 +76,21 @@
 
 #ifdef WIN32
 #include <windows.h>
+#if !defined(EINPROGRESS)
 #define EINPROGRESS WSAEINPROGRESS
+#endif
+#if !defined(EWOULDBLOCK)
 #define EWOULDBLOCK WSAEWOULDBLOCK
+#endif
+#if !defined(EISCONN)
 #define EISCONN     WSAEISCONN
+#endif
+#if !defined(ENOTSOCK)
 #define ENOTSOCK    WSAENOTSOCK
+#endif
+#if !defined(ECONNREFUSED)
 #define ECONNREFUSED WSAECONNREFUSED
+#endif
 #endif
 
 #include "urldata.h"
