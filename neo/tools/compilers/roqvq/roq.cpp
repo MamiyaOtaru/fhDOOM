@@ -208,29 +208,29 @@ int roq::SizeFile( idFile *ftosize )
 }
 
 /* Expanded data destination object for stdio output */
-
+/*
 typedef struct {
-  struct jpeg_destination_mgr pub; /* public fields */
+  struct jpeg_destination_mgr pub; // public fields
 
-  byte* outfile;		/* target stream */
+  byte* outfile;		// target stream 
   int	size;
 } my_destination_mgr;
 
 typedef my_destination_mgr * my_dest_ptr;
-
+*/
 
 /*
  * Initialize destination --- called by jpeg_start_compress
  * before any data is actually written.
  */
-
+/*
 void roq::JPEGInitDestination (j_compress_ptr cinfo) {
   my_dest_ptr dest = (my_dest_ptr) cinfo->dest;
 
   dest->pub.next_output_byte = dest->outfile;
   dest->pub.free_in_buffer = dest->size;
 }
-
+*/
 
 /*
  * Empty the output buffer --- called whenever buffer fills up.
@@ -255,10 +255,11 @@ void roq::JPEGInitDestination (j_compress_ptr cinfo) {
  * write it out when emptying the buffer externally.
  */
 
+/*
 boolean roq::JPEGEmptyOutputBuffer (j_compress_ptr cinfo) {
   return true;
 }
-
+*/
 
 /*
  * Compression initialization.
@@ -274,28 +275,28 @@ boolean roq::JPEGEmptyOutputBuffer (j_compress_ptr cinfo) {
  * to pass write_all_tables=true; then it will take active thought to do the
  * wrong thing.
  */
-
+/*
 void roq::JPEGStartCompress (j_compress_ptr cinfo, bool write_all_tables) {
   if (cinfo->global_state != CSTATE_START)
     ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
 
   if (write_all_tables)
-    jpeg_suppress_tables(cinfo, FALSE);	/* mark all tables to be written */
+    jpeg_suppress_tables(cinfo, FALSE);	// mark all tables to be written 
 
-  /* (Re)initialize error mgr and destination modules */
+  // (Re)initialize error mgr and destination modules 
   (*cinfo->err->reset_error_mgr) ((j_common_ptr) cinfo);
   (*cinfo->dest->init_destination) (cinfo);
-  /* Perform master selection of active modules */
+  // Perform master selection of active modules 
   jinit_compress_master(cinfo);
-  /* Set up for the first pass */
+  // Set up for the first pass 
   (*cinfo->master->prepare_for_pass) (cinfo);
-  /* Ready for application to drive first pass through jpeg_write_scanlines
-   * or jpeg_write_raw_data.
-   */
+  // Ready for application to drive first pass through jpeg_write_scanlines
+  // or jpeg_write_raw_data.
+
   cinfo->next_scanline = 0;
   cinfo->global_state = (cinfo->raw_data_in ? CSTATE_RAW_OK : CSTATE_SCANNING);
 }
-
+*/
 
 /*
  * Write some scanlines of data to the JPEG compressor.
@@ -311,7 +312,7 @@ void roq::JPEGStartCompress (j_compress_ptr cinfo, bool write_all_tables) {
  * so that the application need not adjust num_lines for end-of-image
  * when using a multiple-scanline buffer.
  */
-
+/*
 JDIMENSION roq::JPEGWriteScanlines (j_compress_ptr cinfo, JSAMPARRAY scanlines, JDIMENSION num_lines) {
   JDIMENSION row_ctr, rows_left;
 
@@ -320,22 +321,21 @@ JDIMENSION roq::JPEGWriteScanlines (j_compress_ptr cinfo, JSAMPARRAY scanlines, 
   if (cinfo->next_scanline >= cinfo->image_height)
     WARNMS(cinfo, JWRN_TOO_MUCH_DATA);
 
-  /* Call progress monitor hook if present */
+  // Call progress monitor hook if present 
   if (cinfo->progress != NULL) {
     cinfo->progress->pass_counter = (long) cinfo->next_scanline;
     cinfo->progress->pass_limit = (long) cinfo->image_height;
     (*cinfo->progress->progress_monitor) ((j_common_ptr) cinfo);
   }
 
-  /* Give master control module another chance if this is first call to
-   * jpeg_write_scanlines.  This lets output of the frame/scan headers be
-   * delayed so that application can write COM, etc, markers between
-   * jpeg_start_compress and jpeg_write_scanlines.
-   */
+  // Give master control module another chance if this is first call to
+  // jpeg_write_scanlines.  This lets output of the frame/scan headers be
+  // delayed so that application can write COM, etc, markers between
+  // jpeg_start_compress and jpeg_write_scanlines.
   if (cinfo->master->call_pass_startup)
     (*cinfo->master->pass_startup) (cinfo);
 
-  /* Ignore any extra scanlines at bottom of image. */
+  // Ignore any extra scanlines at bottom of image. 
   rows_left = cinfo->image_height - cinfo->next_scanline;
   if (num_lines > rows_left)
     num_lines = rows_left;
@@ -345,7 +345,7 @@ JDIMENSION roq::JPEGWriteScanlines (j_compress_ptr cinfo, JSAMPARRAY scanlines, 
   cinfo->next_scanline += row_ctr;
   return row_ctr;
 }
-
+*/
 /*
  * Terminate destination --- called by jpeg_finish_compress
  * after all data has been written.  Usually needs to flush buffer.
@@ -354,7 +354,7 @@ JDIMENSION roq::JPEGWriteScanlines (j_compress_ptr cinfo, JSAMPARRAY scanlines, 
  * application must deal with any cleanup that should happen even
  * for error exit.
  */
-
+/*
 static int hackSize;
 
 void roq::JPEGTermDestination (j_compress_ptr cinfo) {
@@ -362,24 +362,23 @@ void roq::JPEGTermDestination (j_compress_ptr cinfo) {
   size_t datacount = dest->size - dest->pub.free_in_buffer;
   hackSize = datacount;
 }
-
+*/
 
 /*
  * Prepare for output to a stdio stream.
  * The caller must have already opened the stream, and is responsible
  * for closing it after finishing compression.
  */
-
+/*
 void roq::JPEGDest (j_compress_ptr cinfo, byte* outfile, int size) {
   my_dest_ptr dest;
 
-  /* The destination object is made permanent so that multiple JPEG images
-   * can be written to the same file without re-executing jpeg_stdio_dest.
-   * This makes it dangerous to use this manager and a different destination
-   * manager serially with the same JPEG object, because their private object
-   * sizes may be different.  Caveat programmer.
-   */
-  if (cinfo->dest == NULL) {	/* first time for this JPEG object? */
+  // The destination object is made permanent so that multiple JPEG images
+  // can be written to the same file without re-executing jpeg_stdio_dest.
+  // This makes it dangerous to use this manager and a different destination
+  // manager serially with the same JPEG object, because their private object
+  // sizes may be different.  Caveat programmer.
+  if (cinfo->dest == NULL) {	// first time for this JPEG object? 
     cinfo->dest = (struct jpeg_destination_mgr *)
       (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
 				  sizeof(my_destination_mgr));
@@ -392,7 +391,9 @@ void roq::JPEGDest (j_compress_ptr cinfo, byte* outfile, int size) {
   dest->outfile = outfile;
   dest->size = size;
 }
+*/
 
+/*
 void roq::WriteLossless( void ) {
 
 	word direct;
@@ -405,99 +406,44 @@ void roq::WriteLossless( void ) {
 	direct = RoQ_QUAD_JPEG;
 	Write16Word( &direct, RoQFile);
 
-	/* This struct contains the JPEG compression parameters and pointers to
-	* working space (which is allocated as needed by the JPEG library).
-	* It is possible to have several such structures, representing multiple
-	* compression/decompression processes, in existence at once.  We refer
-	* to any one struct (and its associated working data) as a "JPEG object".
-	*/
 	struct jpeg_compress_struct cinfo;
-	/* This struct represents a JPEG error handler.  It is declared separately
-	* because applications often want to supply a specialized error handler
-	* (see the second half of this file for an example).  But here we just
-	* take the easy way out and use the standard error handler, which will
-	* print a message on stderr and call exit() if compression fails.
-	* Note that this struct must live as long as the main JPEG parameter
-	* struct, to avoid dangling-pointer problems.
-	*/
+
 	struct jpeg_error_mgr jerr;
-	/* More stuff */
-	JSAMPROW row_pointer[1];	/* pointer to JSAMPLE row[s] */
-	int row_stride;		/* physical row width in image buffer */
+
+	JSAMPROW row_pointer[1];	
+	int row_stride;		
 	byte *out;
 
-	/* Step 1: allocate and initialize JPEG compression object */
 
-	/* We have to set up the error handler first, in case the initialization
-	* step fails.  (Unlikely, but it could happen if you are out of memory.)
-	* This routine fills in the contents of struct jerr, and returns jerr's
-	* address which we place into the link field in cinfo.
-	*/
 	cinfo.err = jpeg_std_error(&jerr);
-	/* Now we can initialize the JPEG compression object. */
 	jpeg_create_compress(&cinfo);
 
-	/* Step 2: specify data destination (eg, a file) */
-	/* Note: steps 2 and 3 can be done in either order. */
 
-	/* Here we use the library-supplied code to send compressed data to a
-	* stdio stream.  You can also write your own code to do something else.
-	* VERY IMPORTANT: use "b" option to fopen() if you are on a machine that
-	* requires it in order to write binary files.
-	*/
 	out = (byte *)Mem_Alloc(image->pixelsWide()*image->pixelsHigh()*4);
 	JPEGDest(&cinfo, out, image->pixelsWide()*image->pixelsHigh()*4);
 
-	/* Step 3: set parameters for compression */
-
-	/* First we supply a description of the input image.
-	* Four fields of the cinfo struct must be filled in:
-	*/
-	cinfo.image_width = image->pixelsWide(); 	/* image width and height, in pixels */
+	cinfo.image_width = image->pixelsWide(); 	
 	cinfo.image_height = image->pixelsHigh();
-	cinfo.input_components = 4;		/* # of color components per pixel */
-	cinfo.in_color_space = JCS_RGB; 	/* colorspace of input image */
-	/* Now use the library's routine to set default compression parameters.
-	* (You must set at least cinfo.in_color_space before calling this,
-	* since the defaults depend on the source color space.)
-	*/
+	cinfo.input_components = 4;		
+	cinfo.in_color_space = JCS_RGB; 	
+
 	jpeg_set_defaults(&cinfo);
-	/* Now you can set any non-default parameters you wish to.
-	* Here we just illustrate the use of quality (quantization table) scaling:
-	*/
-	jpeg_set_quality(&cinfo, paramFile->JpegQuality(), true /* limit to baseline-JPEG values */);
 
-	/* Step 4: Start compressor */
+	jpeg_set_quality(&cinfo, paramFile->JpegQuality(), true );
 
-	/* true ensures that we will write a complete interchange-JPEG file.
-	* Pass true unless you are very sure of what you're doing.
-	*/
+
 	JPEGStartCompress(&cinfo, true);
 
-	/* Step 5: while (scan lines remain to be written) */
-	/*           jpeg_write_scanlines(...); */
-
-	/* Here we use the library's state variable cinfo.next_scanline as the
-	* loop counter, so that we don't have to keep track ourselves.
-	* To keep things simple, we pass one scanline per call; you can pass
-	* more if you wish, though.
-	*/
-	row_stride = image->pixelsWide() * 4;	/* JSAMPLEs per row in image_buffer */
+	row_stride = image->pixelsWide() * 4;	
 
 	byte *pixbuf = image->bitmapData();
 	while (cinfo.next_scanline < cinfo.image_height) {
-		/* jpeg_write_scanlines expects an array of pointers to scanlines.
-		 * Here the array is only one element long, but you could pass
-		 * more than one scanline at a time if that's more convenient.
-		 */
 		row_pointer[0] = &pixbuf[((cinfo.image_height-1)*row_stride)-cinfo.next_scanline * row_stride];
 		(void) JPEGWriteScanlines(&cinfo, row_pointer, 1);
 	}
 
-	/* Step 6: Finish compression */
 
 	jpeg_finish_compress(&cinfo);
-	/* After finish_compress, we can close the output file. */
 
 	directdw = hackSize;
 	common->Printf("writeLossless: writing %d bytes to RoQ_QUAD_JPEG\n", hackSize);
@@ -508,14 +454,12 @@ void roq::WriteLossless( void ) {
 	RoQFile->Write( out, hackSize );
 	Mem_Free(out);
 
-	/* Step 7: release JPEG compression object */
 
-	/* This is an important step since it will release a good deal of memory. */
 	jpeg_destroy_compress(&cinfo);
 
-	/* And we're done! */
 	encoder->SetPreviousImage( "first frame", image );
 }
+*/
 
 void roq::InitRoQFile( const char *RoQFilename )
 {

@@ -32,6 +32,9 @@ If you have questions concerning this license or the applicable additional terms
 #include "../framework/File.h"
 #include "tr_local.h"
 
+// DG: replace libjpeg with stb_image.h because it causes fewer headaches
+#include "stb_image.h"
+
 namespace {
 	//The dwCaps2 member of the DDSCAPS2 structure can be set to one or more of the following values.Flag	Value
 	const uint32 DDSCAPS2_CUBEMAP = 0x00000200;
@@ -108,6 +111,11 @@ bool fhImageData::TryLoadFile( const char* filename, const char* ext, fhImageDat
 
 
 bool fhImageData::LoadFile(const char* filename, fhImageData* imageData, bool forceRgba, ID_TIME_T* timestamp) {
+	// JW: jpg *should* only be in !forceRGBA - shouldn't use jpg for normal maps but D3HDP does
+	if (TryLoadFile( filename, "jpg", imageData, timestamp, &fhImageData::LoadJPG )){
+		return true;
+	}
+	
 	if (!forceRgba) {
 		if (TryLoadFile(filename, "dds", imageData, timestamp, &fhImageData::LoadDDS)){
 			return true;
@@ -238,9 +246,7 @@ bool fhImageData::LoadFile(const char* filename, bool toRgba /* = false */) {
 		if (!ok) {
 			name.StripFileExtension();
 			name.DefaultFileExtension( ".jpg" );
-			common->Warning( "jpg loading not implemented yet" );
-			ok = false;
-			//ok = LoadJPG( name.c_str(), pic, width, height, timestamp );
+			ok = LoadJPG( name.c_str(), toRgba );
 		}
 	}
 	else if (ext == "dds") {
@@ -261,9 +267,7 @@ bool fhImageData::LoadFile(const char* filename, bool toRgba /* = false */) {
 		//ok = LoadBMP( name.c_str(), pic, width, height, timestamp );
 	}
 	else if (ext == "jpg") {
-		assert( false && "jpg loading not implemented yet" );
-		ok = false;
-		//ok = LoadJPG( name.c_str(), pic, width, height, timestamp );
+		ok = LoadJPG( name.c_str(), toRgba );
 	}
 
 	//
@@ -315,6 +319,15 @@ bool fhImageData::LoadTGA(const char* filename, bool toRgba) {
 	fhStaticBuffer<byte> buffer;
 	if (LoadFileIntoBuffer(filename, buffer)) {
 		return LoadTGA(buffer, toRgba);
+	}
+
+	return false;
+}
+
+bool fhImageData::LoadJPG(const char* filename, bool toRgba) {
+	fhStaticBuffer<byte> buffer;
+	if (LoadFileIntoBuffer(filename, buffer)) {
+		return LoadJPG(buffer, toRgba);
 	}
 
 	return false;
@@ -698,6 +711,40 @@ bool fhImageData::LoadTGA(fhStaticBuffer<byte>& buffer, bool toRgba) {
 	this->data = rgba.Release();
 	this->format = pixelFormat_t::RGBA;
 
+	return true;
+}
+
+bool fhImageData::LoadJPG(fhStaticBuffer<byte>& buffer, bool toRgba) {
+	int len = buffer.Num();
+	int w=0, h=0, comp=0;
+	byte* decodedImageData = stbi_load_from_memory( buffer.Get(), len, &w, &h, &comp, 4 );
+
+	if ( decodedImageData == NULL ) {
+		common->Warning( "stb_image was unable to load JPG %s : %s\n",
+		                 "filename", stbi_failure_reason() );
+		return false;
+	}
+
+	// *pic must be allocated with R_StaticAlloc(), but stb_image allocates with malloc()
+	// (and as there is no R_StaticRealloc(), #define STBI_MALLOC etc won't help)
+	// so the decoded data must be copied once
+	int size = w*h*4;
+	fhStaticBuffer<byte> rgba(size);
+	memcpy( rgba.Get(), decodedImageData, size );
+	// now that decodedImageData has been copied into *pic, it's not needed anymore
+	stbi_image_free( decodedImageData );
+	
+	level_t level;
+	level.width = w;
+	level.height = h;
+	level.size = size;
+
+	level.offset = 0;
+	this->faces[0].levels[0] = level;
+	this->numFaces = 1;
+	this->numLevels = 1;
+	this->data = rgba.Release();
+	this->format = pixelFormat_t::RGBA;
 	return true;
 }
 

@@ -108,6 +108,7 @@ public:
 	bool        LoadFile(const char* filename, bool toRgba = false);
 	bool        LoadDDS( const char* filename, bool toRgba = false );
 	bool        LoadTGA(const char* filename, bool toRgba = false);
+	bool        LoadJPG( const char *filename, bool toRgba = false );
 	bool        LoadProgram(const char* program);
 	bool        LoadCubeMap( const fhImageData sides[6], const char* name );
 	bool        LoadRgbaFromMemory( const byte* pic, uint32 width, uint32 height );
@@ -143,6 +144,7 @@ private:
 
 	bool        LoadTGA(fhStaticBuffer<byte>& buffer, bool toRgba);
 	bool        LoadDDS(fhStaticBuffer<byte>& buffer, bool toRgba);
+	bool        LoadJPG(fhStaticBuffer<byte>& buffer, bool toRgba);
 
 	bool        ParseImageProgram_r(idLexer& src, bool noload, bool toRgba);
 
